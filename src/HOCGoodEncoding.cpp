@@ -1,6 +1,6 @@
 #include "HOCGoodEncoding.h"
 
-#include <iostream>
+#include <cstdio>
 
 void HOCGoodEncoding::load_data(const uint8_t *data, int l, int n) {
     this->l = l;
@@ -20,17 +20,17 @@ void HOCGoodEncoding::load_data(const uint8_t *data, int l, int n) {
     }
 }
 
-std::vector<std::pair<int, int>> HOCGoodEncoding::get_pairs() {
-    std::vector<std::pair<int, int>> r;
+void HOCGoodEncoding::print_pairs() {
     for (int i = 1; i < n; i++) {
-        for(int j = 0; j < i; j++) {
+        for (int j = 0; j < i; j++) {
             bool distance_one = false;
             bool differs = false;
-            for(int k = 0; k < s; k++) {
+            for (int k = 0; k < s; k++) {
                 uint32_t prod = bits[i * s + k] ^ bits[j * s + k];
-                if(prod == 0) continue;
-                if((prod & (prod - 1)) == 0) {
-                    if(differs) {
+                if (prod == 0)
+                    continue;
+                if ((prod & (prod - 1)) == 0) {
+                    if (differs) {
                         distance_one = false;
                         break;
                     }
@@ -42,13 +42,11 @@ std::vector<std::pair<int, int>> HOCGoodEncoding::get_pairs() {
                 break;
             }
 
-            if(distance_one) {
-                 r.emplace_back(j, i);
+            if (distance_one) {
+                printf("%d %d\n", j, i);
             }
         }
-        if(i % 1000 == 999) std::cout << i << '\n';
     }
-    return r;
 }
 
 HOCGoodEncoding::~HOCGoodEncoding() { delete[] bits; }
