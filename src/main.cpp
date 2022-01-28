@@ -1,3 +1,4 @@
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -6,9 +7,35 @@
 
 #include "HOCBadEncoding.h"
 #include "HOCGoodEncoding.h"
+#include "HOGPU.cuh"
+#include "HOne.h"
+
+void save_log(std::string log_file, int method, int l, int n,
+              long load_duration, long print_duration) {
+    std::ofstream file(log_file, std::ios::app);
+    file << method << ',' << l << ',' << n << ',' << load_duration << ','
+         << print_duration << '\n';
+    file.close();
+}
 
 int main(int argc, char **argv) {
-    const char *filename = argc > 1 ? argv[1] : "bit_sequences_1000_10000_100";
+    HOne *hone;
+    int method = 2;
+    if (argc > 1) {
+        method = atoi(argv[1]);
+    }
+    switch (method) {
+    case 0:
+        hone = new HOCBadEncoding();
+        break;
+    case 1:
+        hone = new HOCGoodEncoding();
+        break;
+    case 2:
+        hone = new HOGPU();
+    }
+
+    const char *filename = argc > 2 ? argv[2] : "bit_sequences_1000_10000_100";
 
     int l, n, correct_result;
     sscanf(filename, "bit_sequences_%d_%d_%d", &l, &n, &correct_result);
@@ -18,8 +45,6 @@ int main(int argc, char **argv) {
     int size = (l * n - 1) / 8 + 1;
 
     uint8_t *data = new uint8_t[size]();
-
-    std::cout << "Reading data.\n";
 
     int index = 0;
     for (int i = 0; i < n; i++) {
@@ -34,18 +59,22 @@ int main(int argc, char **argv) {
         }
     }
 
-    std::cout << "Data read.\n";
-
-    HOCGoodEncoding hone;
-    hone.load_data(data, l, n);
+    auto time = std::chrono::high_resolution_clock::now();
+    hone->load_data(data, l, n);
+    auto load_duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                             std::chrono::high_resolution_clock::now() - time)
+                             .count();
     delete[] data;
 
-    auto pairs = hone.get_pairs();
-    // for(const auto& [p1, p2] : pairs) {
-    //     std::cout << p1 << ' ' << p2 << '\n';
-    // }
-    std::cout << "Expected: " << correct_result << "\n"
-              << "Got:      " << pairs.size() << '\n';
+    time = std::chrono::high_resolution_clock::now();
+    hone->print_pairs();
+    auto print_duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                              std::chrono::high_resolution_clock::now() - time)
+                              .count();
+
+    save_log("log", method, l, n, load_duration, print_duration);
+
+    delete hone;
 
     return 0;
 }
