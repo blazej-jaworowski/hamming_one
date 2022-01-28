@@ -1,9 +1,9 @@
 #include <cstdlib>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <vector>
-#include <cstring>
 
 int main(int argc, char **argv) {
     int l = 1000;
@@ -44,15 +44,16 @@ int main(int argc, char **argv) {
     std::vector<bool *> bits;
 
     for (int i = 0; i < n; i++) {
-        bool * new_bits = new bool[l];
+        bool *new_bits = new bool[l];
         int bit_index = 0;
         for (int j = 0; j < l; j++) {
             new_bits[bit_index++] = rand() % 2;
         }
         bits.push_back(new_bits);
 
-        if (num_pairs > 0 && (rand() % ((n - i) / num_pairs)) == 0) {
-            const bool * to_copy = bits[rand() % bits.size()];
+        if (num_pairs > 0 &&
+            (n - i < num_pairs || rand() % ((n - i) / num_pairs) == 0)) {
+            const bool *to_copy = bits[rand() % bits.size()];
             new_bits = new bool[l];
             std::memcpy(new_bits, to_copy, l);
             int change = rand() % l;
@@ -65,8 +66,8 @@ int main(int argc, char **argv) {
 
     std::fstream file(filename.str(), std::fstream::out | std::fstream::trunc);
 
-    for(const bool* b : bits) {
-        for(int i = 0; i < l; i++) {
+    for (const bool *b : bits) {
+        for (int i = 0; i < l; i++) {
             file << b[i] ? '1' : '0';
         }
         file << '\n';
